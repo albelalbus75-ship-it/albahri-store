@@ -11,6 +11,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 :root{
@@ -99,6 +100,7 @@ header h1 span{font-size:20px}
 .btn.pri{background:var(--pri); color:#fff; border-color:var(--pri)}
 .btn.dgr{color:var(--danger); border-color:#fecaca; background:#fef2f2}
 .btn.ok{background:var(--ok); color:#fff; border-color:var(--ok)}
+.btn.sync{background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; border:none}
 
 .rate-field{
   display:inline-flex; align-items:center; gap:5px;
@@ -1159,6 +1161,7 @@ body.dark .st-remove-btn:active{ background:rgba(248,113,113,.12); }
   <button class="btn" id="tplBtn" title="تحميل قالب استيراد فارغ">📋 قالب</button>
   <button class="btn" id="expBtn">⬇️ تصدير</button>
   <button class="btn admin-only" id="impBtn">⬆️ استيراد</button>
+  <button class="btn sync" id="syncBtn" title="مزامنة سحابية">☁️ مزامنة</button>
   <button class="btn dgr admin-only" id="delAllBtn">🗑️</button>
   <input type="file" id="file" accept=".csv,text/csv" hidden>
 </div>
@@ -1499,8 +1502,15 @@ body.dark .st-remove-btn:active{ background:rgba(248,113,113,.12); }
 
 <script>
 /* ================================================================
-   قاعدة بيانات الأصناف — نسخة مع نظام المستخدمين + إخفاء الأعمدة
+   قاعدة بيانات الأصناف — نظام المستخدمين + المزامنة السحابية
    ================================================================ */
+
+// ═══════════════════════════════════════════════════════════════
+// 🔑 إعدادات Supabase
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://bowsscqbxxmisvhthszk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvd3NzY3FieHhtaXN2dGhzdHprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMDU1NTYsImV4cCI6MjEwNjg4MTU1Nn0.iR4h0t1P_3YlQc1DT1lyg3nAtcsDUp_D2a9tOgNjWP0';
+// ═══════════════════════════════════════════════════════════════
 
 const $ = s => document.querySelector(s);
 let DB = [];
@@ -1528,6 +1538,12 @@ let currentRate = Number(localStorage.getItem(RATE_KEY)) || 0;
 const PAGE_CHUNK = 300;
 let renderLimit = PAGE_CHUNK;
 let lastRowsCache = [];
+
+// ☁️ حالة المزامنة
+let supabaseClient = null;
+let isSyncing = false;
+let realtimeChannel = null;
+let lastSyncAt = 0;
 
 /* ================================================================
    أدوات عامة
@@ -1891,6 +1907,286 @@ function render(keepLimit){
 }
 
 /* ================================================================
+   ☁️ المزامنة السحابية — Supabase
+   ================================================================ */
+function initSupabase(){
+  try{
+    if(!SUPABASE_URL || SUPABASE_URL.includes('ضع_هنا')){ console.log('☁️ URL ناقص'); return false; }
+    if(!SUPABASE_KEY || SUPABASE_KEY.includes('ضع_هنا')){ console.log('☁️ KEY ناقص'); return false; }
+    if(typeof window.supabase === 'undefined'){ console.log('⚠️ مكتبة Supabase غير محملة'); return false; }
+
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: false },
+      realtime: { params: { eventsPerSecond: 10 } }
+    });
+    console.log('✅ Supabase متصل');
+    updateCloudStatus('متصل', 'ok');
+    return true;
+  }catch(e){
+    console.error('❌ خطأ في Supabase:', e);
+    updateCloudStatus('خطأ', 'danger');
+    return false;
+  }
+}
+
+function updateCloudStatus(text, kind){
+  let el = document.getElementById('cloudStatusChip');
+  if(!el){
+    const chip = document.getElementById('userChip');
+    if(!chip) return;
+    el = document.createElement('span');
+    el.id = 'cloudStatusChip';
+    el.style.cssText = 'display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:20px; margin-inline-start:6px; transition:.2s';
+    chip.parentNode.insertBefore(el, chip);
+  }
+  const colors = {
+    ok:'linear-gradient(135deg,#10b981,#059669)',
+    warn:'linear-gradient(135deg,#f59e0b,#d97706)',
+    danger:'linear-gradient(135deg,#dc2626,#991b1b)',
+    info:'linear-gradient(135deg,#3b82f6,#1d4ed8)'
+  };
+  el.textContent = '☁️ ' + text;
+  el.style.background = colors[kind] || colors.info;
+  el.style.color = '#fff';
+}
+
+async function pushItemToCloud(item){
+  if(!supabaseClient || !item || isSyncing) return;
+  try{
+    const payload = {
+      id: String(item.id),
+      barcode: item.barcode || '',
+      no: item.no || '',
+      name: item.name || '',
+      model: item.model || '',
+      cost: Number(item.cost) || 0,
+      retail: Number(item.retail) || 0,
+      whole: Number(item.whole) || 0,
+      unit: item.unit || '',
+      branch: item.branch || 'الإدارة',
+      special: Number(item.special) || 0,
+      package: item.package || '',
+      col2: item.col2 || '',
+      retail2: Number(item.retail2) || 0,
+      sale_branch: item.saleBranch || '',
+      updated_at: new Date().toISOString(),
+      updated_by: currentUser ? currentUser.name : 'unknown'
+    };
+    const { error } = await supabaseClient.from('items').upsert(payload, { onConflict: 'id' });
+    if(error) console.warn('pushItem:', error.message);
+    else updateCloudStatus('مُتزامن', 'ok');
+  }catch(e){ console.warn('pushItemToCloud:', e); }
+}
+
+async function deleteItemFromCloud(id){
+  if(!supabaseClient || isSyncing) return;
+  try{
+    const { error } = await supabaseClient.from('items').delete().eq('id', String(id));
+    if(error) console.warn('deleteCloud:', error.message);
+  }catch(e){ console.warn('deleteItemFromCloud:', e); }
+}
+
+async function pushBulkToCloud(items){
+  if(!supabaseClient || !items || !items.length) return;
+  try{
+    const CH = 500;
+    for(let i = 0; i < items.length; i += CH){
+      const chunk = items.slice(i, i + CH).map(it => ({
+        id: String(it.id),
+        barcode: it.barcode || '',
+        no: it.no || '',
+        name: it.name || '',
+        model: it.model || '',
+        cost: Number(it.cost) || 0,
+        retail: Number(it.retail) || 0,
+        whole: Number(it.whole) || 0,
+        unit: it.unit || '',
+        branch: it.branch || 'الإدارة',
+        special: Number(it.special) || 0,
+        package: it.package || '',
+        col2: it.col2 || '',
+        retail2: Number(it.retail2) || 0,
+        sale_branch: it.saleBranch || '',
+        updated_at: new Date().toISOString(),
+        updated_by: currentUser ? currentUser.name : 'unknown'
+      }));
+      const { error } = await supabaseClient.from('items').upsert(chunk, { onConflict: 'id' });
+      if(error){ console.error('pushBulk:', error); return; }
+      updateCloudStatus(`رفع ${Math.min(i + CH, items.length)}/${items.length}`, 'warn');
+    }
+  }catch(e){ console.error('pushBulkToCloud:', e); }
+}
+
+async function pullItemsFromCloud(){
+  if(!supabaseClient) return [];
+  try{
+    let all = [];
+    let from = 0;
+    const step = 1000;
+    while(true){
+      const { data, error } = await supabaseClient
+        .from('items').select('*').range(from, from + step - 1);
+      if(error){ console.error('pull:', error); break; }
+      if(!data || !data.length) break;
+      all = all.concat(data);
+      if(data.length < step) break;
+      from += step;
+    }
+    return all.map(r => ({
+      id: r.id, barcode: r.barcode, no: r.no, name: r.name,
+      model: r.model, cost: r.cost, retail: r.retail, whole: r.whole,
+      unit: r.unit, branch: r.branch, special: r.special,
+      package: r.package, col2: r.col2, retail2: r.retail2,
+      saleBranch: r.sale_branch, created: r.created
+    }));
+  }catch(e){ console.error('pullItems:', e); return []; }
+}
+
+async function pushUsersToCloud(){
+  if(!supabaseClient || isSyncing) return;
+  try{
+    const all = getUsers();
+    const payload = all.map(u => ({
+      id: u.id, name: u.name, username: u.username,
+      password: u.password, role: u.role, active: u.active ? 1 : 0
+    }));
+    const { error } = await supabaseClient.from('users').upsert(payload, { onConflict: 'id' });
+    if(error) console.warn('pushUsers:', error.message);
+  }catch(e){ console.warn('pushUsersToCloud:', e); }
+}
+
+async function pullUsersFromCloud(){
+  if(!supabaseClient) return [];
+  try{
+    const { data, error } = await supabaseClient.from('users').select('*');
+    if(error){ console.warn('pullUsers:', error.message); return []; }
+    return (data || []).map(u => ({
+      id: u.id, name: u.name, username: u.username,
+      password: u.password, role: u.role, active: u.active
+    }));
+  }catch(e){ return []; }
+}
+
+async function pushRateToCloud(){
+  if(!supabaseClient || isSyncing) return;
+  try{
+    await supabaseClient.from('settings').upsert(
+      { key: 'exchange_rate', value: String(currentRate),
+        updated_at: new Date().toISOString(),
+        updated_by: currentUser ? currentUser.name : 'unknown' },
+      { onConflict: 'key' }
+    );
+  }catch(e){ console.warn('pushRate:', e); }
+}
+
+async function pullRateFromCloud(){
+  if(!supabaseClient) return null;
+  try{
+    const { data, error } = await supabaseClient
+      .from('settings').select('*').eq('key', 'exchange_rate').maybeSingle();
+    if(error || !data) return null;
+    return Number(data.value) || 0;
+  }catch(e){ return null; }
+}
+
+async function fullSync(){
+  if(!supabaseClient){ toast('☁️ المزامنة غير مُهيأة', 'warn'); return; }
+  if(isSyncing){ toast('⏳ المزامنة جارية...'); return; }
+  isSyncing = true;
+  updateCloudStatus('جاري المزامنة...', 'warn');
+
+  try{
+    // 1) تحميل من السحابة
+    const cloudItems = await pullItemsFromCloud();
+    if(cloudItems.length > 0){
+      await dbClear();
+      await dbBulkPut(cloudItems);
+      console.log('✅ تم تحميل ' + cloudItems.length + ' صنف من السحابة');
+    } else if(DB.length > 0){
+      // السحابة فارغة والمحلي فيه بيانات → ارفع
+      await pushBulkToCloud(DB);
+    }
+
+    await refreshCache();
+
+    // 2) المستخدمون
+    const cloudUsers = await pullUsersFromCloud();
+    if(cloudUsers.length > 0) saveUsersList(cloudUsers);
+    else await pushUsersToCloud();
+
+    // 3) سعر الصرف
+    const cloudRate = await pullRateFromCloud();
+    if(cloudRate !== null && cloudRate > 0){
+      currentRate = cloudRate;
+      saveRate();
+      const r = $('#exchangeRate');
+      if(r) r.value = currentRate;
+      render();
+    } else {
+      await pushRateToCloud();
+    }
+
+    lastSyncAt = Date.now();
+    updateCloudStatus('مُتزامن', 'ok');
+    toast('☁️ تمت المزامنة (' + DB.length + ' صنف)', 'ok');
+  }catch(e){
+    console.error('fullSync:', e);
+    updateCloudStatus('خطأ', 'danger');
+    toast('❌ فشل المزامنة: ' + e.message, 'warn');
+  }finally{
+    isSyncing = false;
+  }
+}
+
+function subscribeRealtime(){
+  if(!supabaseClient) return;
+  try{
+    if(realtimeChannel) supabaseClient.removeChannel(realtimeChannel);
+
+    realtimeChannel = supabaseClient
+      .channel('items-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, async () => {
+        if(isSyncing) return;
+        console.log('🔄 تغيير من جهاز آخر');
+        const cloudItems = await pullItemsFromCloud();
+        await dbClear();
+        await dbBulkPut(cloudItems);
+        await refreshCache();
+        toast('🔄 تم تحديث البيانات', 'ok');
+      })
+      .subscribe(status => {
+        if(status === 'SUBSCRIBED') console.log('✅ Realtime مُشغّل');
+      });
+  }catch(e){ console.warn('subscribeRealtime:', e); }
+}
+
+// اعتراض دوال قاعدة البيانات للمزامنة التلقائية
+(function wrapDBForSync(){
+  const _origPut = dbPut;
+  dbPut = async function(item){
+    const res = await _origPut(item);
+    if(supabaseClient && !isSyncing) pushItemToCloud(item);
+    return res;
+  };
+
+  const _origDel = dbDelete;
+  dbDelete = async function(id){
+    const res = await _origDel(id);
+    if(supabaseClient && !isSyncing) deleteItemFromCloud(id);
+    return res;
+  };
+
+  const _origBulk = dbBulkPut;
+  dbBulkPut = async function(items, onProgress){
+    const res = await _origBulk(items, onProgress);
+    if(supabaseClient && !isSyncing && items && items.length) pushBulkToCloud(items);
+    return res;
+  };
+
+  console.log('✅ تم ربط المزامنة بـ DB');
+})();
+
+/* ================================================================
    📷 الماسح
    ================================================================ */
 async function openScanner(){
@@ -1984,7 +2280,6 @@ function onScanSuccess(text){
   }
 }
 
-/* سجل نتائج المسح */
 function addScanResult(code, item){
   const idx = scanResults.findIndex(r => r.code === code);
   if(idx !== -1) scanResults.splice(idx, 1);
@@ -2018,8 +2313,8 @@ function exportScanResults(){
   scanResults.forEach(r => rows.push([r.code, r.item ? r.item.name : '', r.item ? 'موجود' : 'غير موجود']));
   const csv = '\uFEFF' + rows.map(row => row.map(v => {
     const s = String(v ?? '');
-    return /[",\n;]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
-  }).join(',')).join('\r\n');
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  }).join(';')).join('\r\n');
   const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2333,7 +2628,7 @@ async function delItem(id){
   }catch(err){ alert('❌ فشل الحذف: ' + err.message); }
 }
 
-/* CSV */
+/* CSV — ✅ الفاصلة المنقوطة ; */
 const HEADERS = [
   'رقم الباركود','رقم الصنف','اسم الصنف','رقم الموديل',
   'سعر التكلفة','سعر البيع','سعر الجملة','الوحدة',
@@ -2342,15 +2637,15 @@ const HEADERS = [
 function toCSV(){
   const q = v => {
     const s = String(v == null ? '' : v);
-    return /[",\n;]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
   };
-  const lines = [HEADERS.join(',')];
+  const lines = [HEADERS.join(';')];
   DB.forEach(it => lines.push([
     q(it.barcode), q(it.no), q(it.name), q(it.model),
     it.cost ?? 0, it.retail ?? 0, it.whole ?? 0, q(it.unit),
     it.special ?? 0, q(it.package), q(it.col2),
     it.retail2 ?? 0, q(it.saleBranch), q(it.branch)
-  ].join(',')));
+  ].join(';')));
   return '\uFEFF' + lines.join('\r\n');
 }
 function downloadCSV(){
@@ -2361,7 +2656,7 @@ function downloadCSV(){
   a.download = `اصناف_${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  toast('⬇️ تم تصدير الملف', 'ok');
+  toast('⬇️ تم تصدير الملف (؛)', 'ok');
 }
 function downloadTemplate(){
   const sample = ['1234567890123','1001','منتج تجريبي','MOD-001','100','150','130','حبة','140','12','0','150','المركز الرئيسي','الإدارة'];
@@ -2372,13 +2667,19 @@ function downloadTemplate(){
   a.download = 'قالب_استيراد_الأصناف.csv';
   document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  toast('📋 تم تحميل القالب', 'ok');
+  toast('📋 تم تحميل القالب (؛)', 'ok');
 }
 function detectSeparator(firstLine){
-  const counts = { ',':(firstLine.match(/,/g)||[]).length, ';':(firstLine.match(/;/g)||[]).length, '\t':(firstLine.match(/\t/g)||[]).length };
-  let best=',', max=0;
-  for(const s in counts){ if(counts[s]>max){ max=counts[s]; best=s; } }
-  return best;
+  const counts = {
+    ';': (firstLine.match(/;/g) || []).length,
+    ',': (firstLine.match(/,/g) || []).length,
+    '\t': (firstLine.match(/\t/g) || []).length
+  };
+  // ✅ تفضيل الفاصلة المنقوطة ;
+  if(counts[';'] > 0 && counts[';'] >= counts[',']) return ';';
+  if(counts['\t'] > counts[','] && counts['\t'] > counts[';']) return '\t';
+  if(counts[','] > 0) return ',';
+  return ';';
 }
 function parseCSV(text, sep){
   text = text.replace(/^\uFEFF/,'');
@@ -2591,7 +2892,7 @@ function stopVoice(){
   setTimeout(() => $('#voiceBar').classList.remove('on'), 300);
 }
 
-/* ✅ دوال تصحيح الأرقام المعكوسة */
+/* ✅ تصحيح الأرقام المعكوسة */
 function pickBestNumericValue(numStr, col){
   const reversed = numStr.split('').reverse().join('');
   if(reversed === numStr) return numStr;
@@ -2755,7 +3056,10 @@ $('#voiceContinuous').addEventListener('change', e => {
 })();
 
 /* 💱 سعر الصرف */
-function saveRate(){ try{ localStorage.setItem(RATE_KEY, String(currentRate)); }catch(e){} }
+function saveRate(){
+  try{ localStorage.setItem(RATE_KEY, String(currentRate)); }catch(e){}
+  if(supabaseClient && !isSyncing) pushRateToCloud();
+}
 $('#exchangeRate').addEventListener('input', e => {
   if(!can('changeRate')){
     e.target.value = ''; currentRate = 0; saveRate(); render();
@@ -3209,15 +3513,15 @@ function exportStocktake(){
   });
   const csv = '\uFEFF' + rows.map(row => row.map(v => {
     const s = String(v ?? '');
-    return /[",\n;]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
-  }).join(',')).join('\r\n');
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  }).join(';')).join('\r\n');
   const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `جرد_${new Date().toISOString().slice(0,10)}.csv`;
   document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  toast('⬇️ تم تصدير الجرد', 'ok');
+  toast('⬇️ تم تصدير الجرد (؛)', 'ok');
 }
 
 /* 👥 نظام المستخدمين */
@@ -3291,7 +3595,6 @@ function applyPermissions(){
 
   document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
 
-  // ✅ إتاحة سعر الصرف للموظف (قراءة فقط)
   const rateInput = $('#exchangeRate');
   if(rateInput){
     if(isAdmin){
@@ -3380,6 +3683,7 @@ $('#umChangePass').addEventListener('click', () => {
     saveUsersList(all);
     currentUser.password = newPass;
     toast('✅ تم تغيير كلمة المرور', 'ok');
+    if(supabaseClient) pushUsersToCloud();
   }
 });
 $('#umUsers').addEventListener('click', () => {
@@ -3439,6 +3743,7 @@ $('#usersList').addEventListener('click', e => {
     saveUsersList(all.filter(x => x.id !== id));
     renderUsersList();
     toast('🗑️ تم حذف المستخدم', 'ok');
+    if(supabaseClient) pushUsersToCloud();
   }
 });
 
@@ -3492,6 +3797,7 @@ $('#userSaveBtn').addEventListener('click', () => {
   renderUsersList();
   $('#userFormOverlay').classList.remove('on');
   editingUserId = null;
+  if(supabaseClient) pushUsersToCloud();
 });
 
 $('#userFormCloseBtn').addEventListener('click', () => { $('#userFormOverlay').classList.remove('on'); editingUserId = null; });
@@ -3513,6 +3819,13 @@ $('#file').addEventListener('change', e => {
   if(f) importCSV(f);
   e.target.value = '';
 });
+$('#syncBtn').addEventListener('click', async () => {
+  if(!supabaseClient){
+    toast('☁️ Supabase غير مُهيأ', 'warn');
+    return;
+  }
+  await fullSync();
+});
 $('#delAllBtn').addEventListener('click', async () => {
   if(!can('deleteAll')){ toast('🚫 الحذف الكلي للمدير فقط', 'warn'); return; }
   if(!DB.length){ toast('⚠️ لا توجد بيانات', 'warn'); return; }
@@ -3522,6 +3835,10 @@ $('#delAllBtn').addEventListener('click', async () => {
     await dbClear();
     DB = []; buildSearchIndex(); render();
     toast('🗑️ تم حذف كل الأصناف', 'ok');
+    // حذف من السحابة
+    if(supabaseClient){
+      try{ await supabaseClient.from('items').delete().neq('id', '0'); }catch(e){}
+    }
   }catch(err){ alert('❌ فشل الحذف: ' + err.message); }
 });
 
@@ -3698,6 +4015,14 @@ async function runInit(){
     if(currentRate > 0 && $('#exchangeRate')) $('#exchangeRate').value = currentRate;
     await refreshCache();
     if(migrated) toast('✅ تم ترحيل ' + migrated + ' صنفاً', 'ok');
+
+    // ☁️ تهيئة Supabase والمزامنة
+    if(initSupabase()){
+      setTimeout(async () => {
+        await fullSync();
+        subscribeRealtime();
+      }, 1500);
+    }
   }catch(err){
     console.error(err);
     alert('❌ تعذّر تشغيل قاعدة البيانات: ' + err.message);
