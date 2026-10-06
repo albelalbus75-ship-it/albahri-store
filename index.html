@@ -739,8 +739,11 @@ td.yer.zero{color:#94a3b8; font-weight:400; background:transparent}
 td.name{ cursor:pointer; user-select:none; position:relative; }
 td.name:active{ background:rgba(15,118,110,.08); }
 
+/* ============================================================
+   شاشة الجرد المطوّرة
+   ============================================================ */
 #stocktakeOverlay .sheet{
-  display:flex; flex-direction:column; max-height:92vh; overflow:hidden;
+  display:flex; flex-direction:column; max-height:94vh; overflow:hidden;
 }
 #stocktakeOverlay .sheet > header{ flex-shrink:0; }
 
@@ -750,6 +753,108 @@ td.name:active{ background:rgba(15,118,110,.08); }
 }
 #stocktakeReader video{ border-radius:0 !important; }
 
+/* 🔍 شريط البحث السريع الجديد */
+.st-quickbar{
+  flex-shrink:0;
+  display:flex; gap:8px; align-items:center;
+  padding:10px 12px; background:linear-gradient(135deg,#ecfdf5,#f0fdfa);
+  border-bottom:1px solid var(--bd);
+}
+body.dark .st-quickbar{ background:linear-gradient(135deg,rgba(45,212,191,.10),rgba(45,212,191,.05)); }
+.st-quickbar .st-qb-ico{
+  font-size:18px; color:var(--pri); flex-shrink:0;
+}
+.st-quickbar input{
+  flex:1; min-width:0;
+  padding:11px 14px; border:2px solid var(--pri); border-radius:10px;
+  font-size:15px; font-family:inherit; font-weight:600;
+  background:#fff; color:var(--txt); outline:none;
+  transition:.15s;
+}
+body.dark .st-quickbar input{ background:var(--input); border-color:var(--pri); color:#f1f5f9; }
+.st-quickbar input:focus{ box-shadow:0 0 0 4px rgba(15,118,110,.18); }
+.st-quickbar input::placeholder{ color:#94a3b8; font-weight:500; }
+.st-quickbar .st-qb-scan{
+  border:none; background:linear-gradient(135deg,var(--pri),var(--pri2));
+  color:#fff; width:44px; height:44px; border-radius:11px;
+  font-size:20px; cursor:pointer; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 12px rgba(15,118,110,.4);
+  transition:.15s;
+}
+.st-quickbar .st-qb-scan:active{ transform:scale(.92); }
+.st-quickbar .st-qb-scan.scanning{
+  background:linear-gradient(135deg,#dc2626,#991b1b);
+  animation:stPulse 1.2s infinite;
+}
+@keyframes stPulse{
+  0%,100%{ box-shadow:0 4px 12px rgba(220,38,38,.4); }
+  50%{ box-shadow:0 4px 24px rgba(220,38,38,.8); }
+}
+.st-quickbar .st-qb-add{
+  border:none; background:var(--ok); color:#fff;
+  width:44px; height:44px; border-radius:11px;
+  font-size:20px; cursor:pointer; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 12px rgba(22,163,74,.35);
+  transition:.15s;
+}
+.st-quickbar .st-qb-add:active{ transform:scale(.92); }
+
+/* نتائج البحث السريع */
+#stQuickResults{
+  flex-shrink:0; max-height:260px; overflow-y:auto;
+  background:#fff; border-bottom:1px solid var(--bd);
+  display:none;
+}
+body.dark #stQuickResults{ background:var(--card); }
+#stQuickResults.on{ display:block; }
+#stQuickResults .st-qr-item{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px; border-bottom:1px solid #f1f5f9;
+  cursor:pointer; transition:.12s;
+}
+body.dark #stQuickResults .st-qr-item{ border-bottom-color:#1c2a44; }
+#stQuickResults .st-qr-item:hover{ background:#f0fdfa; }
+body.dark #stQuickResults .st-qr-item:hover{ background:rgba(45,212,191,.08); }
+#stQuickResults .st-qr-item:last-child{ border-bottom:none; }
+#stQuickResults .st-qr-item .st-qr-avatar{
+  width:38px; height:38px; border-radius:10px;
+  background:linear-gradient(135deg,var(--pri),var(--pri2));
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:800; flex-shrink:0;
+}
+#stQuickResults .st-qr-item .st-qr-main{ flex:1; min-width:0; }
+#stQuickResults .st-qr-item .st-qr-name{
+  font-weight:800; font-size:14px; margin-bottom:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#stQuickResults .st-qr-item .st-qr-meta{
+  font-size:11.5px; color:var(--mut);
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+  direction:ltr; text-align:right;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#stQuickResults .st-qr-item .st-qr-price{
+  font-size:13px; font-weight:800; color:var(--pri2);
+  direction:ltr; flex-shrink:0;
+}
+#stQuickResults .st-qr-item.already{
+  background:#fef3c7;
+  opacity:.85;
+}
+body.dark #stQuickResults .st-qr-item.already{ background:rgba(217,119,6,.14); }
+#stQuickResults .st-qr-item.already .st-qr-avatar{
+  background:linear-gradient(135deg,#d97706,#b45309);
+}
+#stQuickResults .st-qr-empty{
+  padding:24px 16px; text-align:center;
+  color:var(--mut); font-size:13px;
+}
+#stQuickResults .st-qr-empty .st-qr-emoji{
+  font-size:32px; margin-bottom:6px;
+}
+
 .st-toolbar{
   flex-shrink:0;
   display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -757,6 +862,7 @@ td.name:active{ background:rgba(15,118,110,.08); }
   border-top:1px solid var(--bd); border-bottom:1px solid var(--bd);
   flex-wrap:wrap;
 }
+body.dark .st-toolbar{ background:var(--card2); }
 .st-count{
   background:var(--pri); color:#fff; font-size:12px; font-weight:800;
   padding:4px 10px; border-radius:20px; min-width:70px; text-align:center;
@@ -825,12 +931,15 @@ td.name:active{ background:rgba(15,118,110,.08); }
   box-shadow:0 12px 32px rgba(0,0,0,.18);
   max-height:260px; overflow-y:auto; min-width:250px;
 }
+body.dark #stSuggest{ background:var(--card); }
 #stSuggest .st-sg{
   padding:8px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9;
   display:flex; flex-direction:column; gap:2px;
 }
+body.dark #stSuggest .st-sg{ border-bottom-color:#1c2a44; }
 #stSuggest .st-sg:last-child{ border-bottom:none; }
 #stSuggest .st-sg.sel, #stSuggest .st-sg:hover{ background:#ecfdf5; }
+body.dark #stSuggest .st-sg.sel, body.dark #stSuggest .st-sg:hover{ background:rgba(45,212,191,.12); }
 #stSuggest .st-sg b{ font-size:14px; color:var(--txt); }
 #stSuggest .st-sg span{ font-size:12px; color:var(--mut); direction:ltr; text-align:right; }
 .st-qty-input{
@@ -942,15 +1051,10 @@ body.dark .nc-btn-copy{ background:linear-gradient(135deg,#1e2b46,#16223a); colo
 body.dark .name-card-close{ background:rgba(255,255,255,.10); color:#94a3b8; }
 body.dark .name-card-close:active{ background:rgba(255,255,255,.20); }
 
-body.dark .st-toolbar{ background:var(--card2); }
-body.dark .st-branch-select{ background:var(--input); color:var(--txt); }
 body.dark .st-table tbody tr{ border-bottom-color:#1c2a44; }
 body.dark .st-table tbody tr.filled{ background:rgba(45,212,191,.09); }
 body.dark .st-table tbody tr.active{ background:rgba(251,191,36,.14); }
 body.dark .st-cell.mut{ color:#5b6b84; }
-body.dark #stSuggest{ background:var(--card); }
-body.dark #stSuggest .st-sg{ border-bottom-color:#1c2a44; }
-body.dark #stSuggest .st-sg.sel, body.dark #stSuggest .st-sg:hover{ background:rgba(45,212,191,.12); }
 body.dark .st-qty-input:focus{ background:rgba(217,119,6,.15); }
 body.dark .st-qty-input:disabled{ background:var(--card2); color:#5b6b84; }
 body.dark .st-remove-btn:active{ background:rgba(248,113,113,.12); }
@@ -1147,6 +1251,9 @@ body.dark .st-remove-btn:active{ background:rgba(248,113,113,.12); }
   </div>
 </div>
 
+<!-- ============================================================
+     📊 شاشة الجرد المطوّرة
+     ============================================================ -->
 <div class="overlay" id="stocktakeOverlay">
   <div class="sheet st-sheet">
     <header>
@@ -1154,6 +1261,20 @@ body.dark .st-remove-btn:active{ background:rgba(248,113,113,.12); }
       <button id="stocktakeCloseBtn">✕</button>
     </header>
 
+    <!-- 🔍 شريط البحث السريع + المسح -->
+    <div class="st-quickbar">
+      <span class="st-qb-ico">🔍</span>
+      <input id="stQuickSearch" type="search"
+             placeholder="ابحث أو امسح: الباركود / رقم الصنف / الاسم..."
+             autocomplete="off">
+      <button class="st-qb-scan" id="stQuickScanBtn" title="مسح بالكاميرا">📷</button>
+      <button class="st-qb-add" id="stQuickAddBtn" title="إضافة للسجل">＋</button>
+    </div>
+
+    <!-- نتائج البحث السريع -->
+    <div id="stQuickResults"></div>
+
+    <!-- كاميرا المسح داخل شاشة الجرد -->
     <div id="stocktakeReader" hidden></div>
 
     <div class="st-toolbar">
@@ -1162,8 +1283,7 @@ body.dark .st-remove-btn:active{ background:rgba(248,113,113,.12); }
         <option value="">كل الفروع</option>
       </select>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="mini-btn" id="stCamBtn">📷 كاميرا</button>
-        <button class="mini-btn" id="stAddBtn">＋ سجل</button>
+        <button class="mini-btn" id="stAddBtn">＋ سجل فارغ</button>
         <button class="mini-btn" id="stExportBtn">⬇️ CSV</button>
         <button class="mini-btn" id="stExportXBtn">📊 Excel</button>
         <button class="mini-btn" id="stClearBtn">🗑️ مسح</button>
@@ -1231,7 +1351,6 @@ body.dark .st-remove-btn:active{ background:rgba(248,113,113,.12); }
     <span></span><span></span><span></span><span></span>
     <span></span><span></span><span></span>
   </div>
-  <div class="vb-hint">قل: الاسم، الموديل، رقم الصنف، أو السعر بالريال</div>
   <div class="vb-lang">
     <span>اللغة:</span>
     <select id="voiceLang">
@@ -1262,9 +1381,9 @@ body.dark .st-remove-btn:active{ background:rgba(248,113,113,.12); }
 
 <script>
 /* ================================================================
-   قاعدة بيانات الأصناف — نسخة مع السماح بتكرار رقم الصنف
-   ✅ الباركود فريد
-   ✅ رقم الصنف قابل للتكرار
+   قاعدة بيانات الأصناف — نسخة مطوّرة
+   ✅ الباركود فريد | ✅ رقم الصنف قابل للتكرار
+   ✅ شاشة جرد مطوّرة بالبحث السريع والمسح والاسم
    ================================================================ */
 
 const $ = s => document.querySelector(s);
@@ -1316,7 +1435,6 @@ function toWesternDigits(str){
     .replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 0x0660 + 48))
     .replace(/[۰-۹]/g, d => String.fromCharCode(d.charCodeAt(0) - 0x06F0 + 48));
 }
-
 function fixScientificNotation(val){
   if(val == null) return '';
   let s = String(val).trim();
@@ -1334,12 +1452,10 @@ function fixScientificNotation(val){
   }
   return s;
 }
-
 function money(n){
   const v = Number(n) || 0;
   return v.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
 }
-
 let tTimer;
 function toast(msg, kind){
   const t = $('#toast');
@@ -1351,7 +1467,6 @@ function toast(msg, kind){
   clearTimeout(tTimer);
   tTimer = setTimeout(()=>t.classList.remove('on'), 2800);
 }
-
 function showProgress(p){
   const el = $('#progress');
   el.style.width = p + '%';
@@ -1361,19 +1476,13 @@ function beep(freq){
   try{
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = ctx.createOscillator(), gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = freq || 1200;
-    gain.gain.value = 0.08;
+    osc.type = 'sine'; osc.frequency.value = freq || 1200; gain.gain.value = 0.08;
     osc.connect(gain); gain.connect(ctx.destination);
     osc.start();
     setTimeout(() => { osc.stop(); ctx.close(); }, 120);
   }catch(e){}
 }
-function beepWarn(){
-  beep(600);
-  setTimeout(()=>beep(600), 150);
-  setTimeout(()=>beep(600), 300);
-}
+function beepWarn(){ beep(600); setTimeout(()=>beep(600),150); setTimeout(()=>beep(600),300); }
 function buzz(ms=80){ if(navigator.vibrate) navigator.vibrate(ms); }
 function buzzWarn(){ if(navigator.vibrate) navigator.vibrate([100,80,100,80,100]); }
 
@@ -1390,12 +1499,10 @@ function searchItems(rawQuery){
   const q = norm(rawQuery);
   const qNoSep = q.replace(/[.,]/g,'');
   if(!q) return DB;
-
   return DB.filter(it => {
     const e = searchIndex.get(it.id);
     if(!e) return false;
     if(e.h.includes(q) || (qNoSep && e.hn.includes(qNoSep))) return true;
-
     const yer = (Number(it.retail) || 0) * currentRate;
     if(!yer) return false;
     const ys = String(yer), ysi = String(Math.floor(yer));
@@ -1483,7 +1590,6 @@ async function migrateFromLocalStorage(){
 function parseNumericFilter(str){
   const s = String(str).trim().replace(/[٬،\s]/g,'').replace(/,/g,'.');
   if(!s) return null;
-
   let m = s.match(/^(-?\d+(?:\.\d+)?)\s*(?:-|\.\.|to)\s*(-?\d+(?:\.\d+)?)$/i);
   if(m){
     const min = parseFloat(m[1]), max = parseFloat(m[2]);
@@ -1516,7 +1622,6 @@ function getColumnFilters(){
 function applyColumnFilters(rows, filters){
   const keys = Object.keys(filters);
   if(!keys.length) return rows;
-
   const matchers = {};
   keys.forEach(k => {
     const v = filters[k];
@@ -1526,7 +1631,6 @@ function applyColumnFilters(rows, filters){
       matchers[k] = norm(v);
     }
   });
-
   return rows.filter(it => keys.every(k => {
     const m = matchers[k];
     if(m === null) return true;
@@ -1577,16 +1681,12 @@ function clearAllFilters(silent){
    ================================================================ */
 function render(keepLimit){
   if(!keepLimit) renderLimit = PAGE_CHUNK;
-
   const qRaw = toWesternDigits($('#q').value);
   const q    = norm(qRaw);
   const cf   = getColumnFilters();
-
   let rows = q ? searchItems(qRaw) : DB;
   rows = applyColumnFilters(rows, cf);
-
   lastRowsCache = rows;
-
   const activeFilters = Object.keys(cf).length;
   let label;
   if(q && activeFilters)  label = `${rows.length} نتيجة (بحث + ${activeFilters} فلتر)`;
@@ -1605,15 +1705,12 @@ function render(keepLimit){
     </td></tr>`;
     return;
   }
-
   const shown = Math.min(renderLimit, rows.length);
   const visible = rows.slice(0, shown);
-
   let html = visible.map(it => {
     const yer = (Number(it.retail) || 0) * currentRate;
     const yerTxt = (currentRate > 0) ? money(yer) : '—';
     const yerCls = (currentRate > 0) ? 'num yer' : 'num yer zero';
-
     return `
     <tr data-id="${it.id}">
       <td class="mono">${esc(it.barcode)}</td>
@@ -1633,7 +1730,6 @@ function render(keepLimit){
       </td>
     </tr>`;
   }).join('');
-
   if(rows.length > shown){
     const remaining = rows.length - shown;
     html += `
@@ -1648,9 +1744,7 @@ function render(keepLimit){
         </td>
       </tr>`;
   }
-
   tb.innerHTML = html;
-
   const lm = $('#loadMoreBtn');
   if(lm){
     lm.addEventListener('click', () => {
@@ -1670,10 +1764,8 @@ async function openScanner(){
   }
   $('#scanOverlay').classList.add('on');
   await new Promise(r => setTimeout(r, 180));
-
   html5QrCode = new Html5Qrcode("reader", { verbose: false });
   scannerPaused = false;
-
   const config = {
     fps: 12,
     qrbox: (vw, vh) => {
@@ -1683,7 +1775,6 @@ async function openScanner(){
     },
     aspectRatio: 1.0
   };
-
   try{
     await html5QrCode.start(
       { facingMode: "environment" }, config,
@@ -1742,11 +1833,9 @@ function onScanSuccess(text){
   const now   = Date.now();
   if(clean === lastScanText && (now - lastScanTime) < SCAN_COOLDOWN) return;
   lastScanText = clean; lastScanTime = now;
-
   buzz(80); beep();
   const hits = findByCode(clean);
   const item = hits[0] || null;
-
   if(continuousMode){
     addScanResult(clean, item);
     $('#q').value = clean;
@@ -1765,7 +1854,7 @@ function onScanSuccess(text){
 }
 
 /* ================================================================
-   سجل نتائج المسح
+   سجل نتائج المسح العام
    ================================================================ */
 function addScanResult(code, item){
   const idx = scanResults.findIndex(r => r.code === code);
@@ -1777,7 +1866,6 @@ function addScanResult(code, item){
 function renderScanResults(){
   const box = $('#scanResults'), list = $('#scanResultsList');
   const cntEl = $('#scanResultsCount'), badge = $('#scanCount');
-
   if(!continuousMode || !scanResults.length){
     box.style.display = 'none';
     badge.style.display = 'none';
@@ -1787,7 +1875,6 @@ function renderScanResults(){
   badge.style.display = 'inline-block';
   badge.textContent = scanResults.length;
   cntEl.textContent = scanResults.length;
-
   list.innerHTML = scanResults.map(r => {
     const found = !!r.item;
     return `
@@ -1828,7 +1915,6 @@ function buildItemShareText(item){
   const retail = Number(item.retail) || 0;
   const yer    = retail * currentRate;
   const hasRate = currentRate > 0;
-
   let txt = '';
   txt += '👑 *بطاقة الصنف*\n';
   txt += '━━━━━━━━━━━━━━━\n\n';
@@ -1847,7 +1933,6 @@ function buildItemShareText(item){
   }
   return txt;
 }
-
 async function copyItemInfo(item){
   if(!item) return;
   const txt = buildItemShareText(item);
@@ -1856,12 +1941,8 @@ async function copyItemInfo(item){
       await navigator.clipboard.writeText(txt);
     } else {
       const ta = document.createElement('textarea');
-      ta.value = txt;
-      ta.style.position = 'fixed';
-      ta.style.top = '-1000px';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.top = '-1000px';
+      document.body.appendChild(ta); ta.focus(); ta.select();
       try{ document.execCommand('copy'); }catch(e){}
       ta.remove();
     }
@@ -1872,20 +1953,16 @@ async function copyItemInfo(item){
     toast('⚠️ تعذّر النسخ', 'warn');
   }
 }
-
 function shareItemWhatsApp(item){
   if(!item) return;
   const txt = buildItemShareText(item);
   const url = 'https://wa.me/?text=' + encodeURIComponent(txt);
-
   if(navigator.share){
-    navigator.share({
-      title: 'بطاقة الصنف - ' + item.name,
-      text: txt
-    }).then(() => {}).catch(err => {
-      if(err && err.name === 'AbortError') return;
-      window.open(url, '_blank', 'noopener,noreferrer');
-    });
+    navigator.share({ title: 'بطاقة الصنف - ' + item.name, text: txt })
+      .then(() => {}).catch(err => {
+        if(err && err.name === 'AbortError') return;
+        window.open(url, '_blank', 'noopener,noreferrer');
+      });
   } else {
     window.open(url, '_blank', 'noopener,noreferrer');
   }
@@ -1897,10 +1974,8 @@ function shareItemWhatsApp(item){
 function openInfoCard(item, scanCode){
   currentInfoItem = item;
   currentInfoScanCode = scanCode || null;
-
   const card = $('#infoCard');
   const foot = $('#infoFoot');
-
   if(!item){
     card.innerHTML = `
       <div class="info-empty">
@@ -1919,7 +1994,6 @@ function openInfoCard(item, scanCode){
     const margin  = retail > 0 ? ((profit / retail) * 100).toFixed(1) : '0.0';
     const isLoss  = profit < 0;
     const yer     = retail * currentRate;
-
     card.innerHTML = `
       <div class="info-name">${esc(item.name)}</div>
       ${item.barcode ? `<span class="info-barcode">${esc(item.barcode)}</span>` : ''}
@@ -1968,7 +2042,6 @@ function openInfoCard(item, scanCode){
         <span class="val">${money(yer)} ر.ي</span>
         <span class="rate-hint">سعر الصرف: ${currentRate}</span>
       </div>` : ''}`;
-
     foot.className = 'info-foot';
     foot.innerHTML = `
       <button class="btn btn-wa"   id="infoWaBtn">📲 مشاركة على واتساب</button>
@@ -1976,7 +2049,6 @@ function openInfoCard(item, scanCode){
       <button class="btn pri" id="infoEditBtn">✏️ تعديل</button>
       <button class="btn"     id="infoQrBtn">🔳 QR</button>
       <button class="btn"     id="infoCloseBtn2">✕ إغلاق</button>`;
-
     $('#infoWaBtn').onclick   = () => shareItemWhatsApp(currentInfoItem);
     $('#infoCopyBtn').onclick = () => copyItemInfo(currentInfoItem);
     $('#infoEditBtn').onclick = () => {
@@ -1990,11 +2062,9 @@ function openInfoCard(item, scanCode){
       openQR(it);
     };
   }
-
   $('#infoCloseBtn2').onclick = closeInfoCard;
   $('#infoOverlay').classList.add('on');
 }
-
 function closeInfoCard(){
   $('#infoOverlay').classList.remove('on');
   currentInfoItem = null;
@@ -2007,20 +2077,15 @@ function closeInfoCard(){
    ================================================================ */
 function openNameCard(item){
   if(!item) return;
-
   const card = $('#nameCard');
   const retail = Number(item.retail) || 0;
   const yer = retail * currentRate;
   const hasRate = currentRate > 0;
-
   card.innerHTML = `
     <button class="name-card-close" id="nameCardCloseBtn" title="إغلاق">✕</button>
-
     <div class="nc-crown">👑</div>
     <div class="nc-divider"></div>
-
     <h2 class="nc-name">${esc(item.name)}</h2>
-
     <div class="nc-grid">
       <div class="nc-cell nc-no">
         <div class="nc-lbl">رقم الصنف</div>
@@ -2031,16 +2096,12 @@ function openNameCard(item){
         <div class="nc-val">${esc(item.unit || '—')}</div>
       </div>
     </div>
-
     <div class="nc-price ${hasRate ? '' : 'no-rate'}">
       <div class="nc-price-lbl">${hasRate ? '💵 السعر بالريال اليمني' : '⚠️ لم يتم تحديد سعر الصرف'}</div>
-      <div class="nc-price-val">
-        ${hasRate ? money(yer) : '—'}
-      </div>
+      <div class="nc-price-val">${hasRate ? money(yer) : '—'}</div>
       ${hasRate ? '<div class="nc-price-cur">ريال يمني</div>' : ''}
       ${hasRate ? `<span class="nc-rate">سعر الصرف: ${currentRate}</span>` : ''}
     </div>
-
     <div class="nc-actions">
       <button class="nc-btn nc-btn-copy" id="ncCopyBtn" title="نسخ المعلومات">
         <span class="nc-btn-ico">📋</span>
@@ -2056,14 +2117,11 @@ function openNameCard(item){
       </button>
     </div>
   `;
-
   $('#nameCardCloseBtn').onclick = closeNameCard;
   $('#ncCopyBtn').onclick = () => copyItemInfo(item);
   $('#ncWaBtn').onclick   = () => shareItemWhatsApp(item);
-
   $('#nameCardOverlay').classList.add('on');
 }
-
 function closeNameCard(){
   $('#nameCardOverlay').classList.remove('on');
   maybeResumeScanner();
@@ -2108,7 +2166,6 @@ function printQR(){
   const canvas = box.querySelector('canvas'), img = box.querySelector('img');
   if(canvas)   qrImgHtml = `<img src="${canvas.toDataURL('image/png')}" style="width:200px;height:200px">`;
   else if(img) qrImgHtml = `<img src="${img.src}" style="width:200px;height:200px">`;
-
   const w = window.open('', '_blank', 'width=420,height=620');
   if(!w){ toast('⚠️ منع المتصفح النافذة', 'warn'); return; }
   const safeName = esc(item.name || '');
@@ -2117,7 +2174,6 @@ function printQR(){
     ? `<div style="font-weight:700;color:#b45309;margin-top:6px;font-size:13px">
          ${money((Number(item.retail)||0) * currentRate)} ر.ي</div>`
     : '';
-
   w.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl"><head>
     <meta charset="UTF-8"><title>طباعة ملصق</title>
     <style>
@@ -2157,7 +2213,6 @@ function openForm(item, opts = {}){
   $('#f_whole').value   = item ? item.whole   ?? 0 : 0;
   $('#f_unit').value    = item ? item.unit    || '' : '';
   $('#f_branch').value  = item ? item.branch  || '' : '';
-
   $('#overlay').classList.add('on');
   setTimeout(() => $(opts.barcode ? '#f_name' : '#f_barcode').focus(), 160);
 }
@@ -2169,7 +2224,6 @@ function closeForm(){
 async function submitForm(){
   const name = $('#f_name').value.trim();
   if(!name){ toast('⚠️ اسم الصنف مطلوب', 'warn'); $('#f_name').focus(); return; }
-
   const data = {
     barcode: fixScientificNotation($('#f_barcode').value.trim()),
     no:      $('#f_no').value.trim(),
@@ -2181,14 +2235,10 @@ async function submitForm(){
     unit:    $('#f_unit').value.trim(),
     branch:  $('#f_branch').value.trim() || 'الإدارة'
   };
-
-  // ✅ الباركود فريد فقط
   if(data.barcode){
     const dup = DB.find(x => x.barcode === data.barcode && x.id !== editId);
     if(dup){ toast('⚠️ الباركود مستخدم للصنف: ' + dup.name, 'warn'); return; }
   }
-  // ✅ رقم الصنف قابل للتكرار (لا فحص هنا)
-
   try{
     if(editId){
       const i = DB.findIndex(x => x.id === editId);
@@ -2224,14 +2274,13 @@ async function delItem(id){
 }
 
 /* ================================================================
-   CSV — تصدير / استيراد
+   CSV
    ================================================================ */
 const HEADERS = [
   'رقم الباركود','رقم الصنف','اسم الصنف','رقم الموديل',
   'سعر التكلفة','سعر البيع','سعر الجملة','الوحدة',
   'سعر خاص','العبوة','عمود2','سعر البيع2','فرع البيع','الفرع'
 ];
-
 function toCSV(){
   const q = v => {
     const s = String(v == null ? '' : v);
@@ -2256,7 +2305,6 @@ function downloadCSV(){
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
   toast('⬇️ تم تصدير الملف', 'ok');
 }
-
 function downloadTemplate(){
   const sample = [
     '1234567890123','1001','منتج تجريبي','MOD-001',
@@ -2272,7 +2320,6 @@ function downloadTemplate(){
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
   toast('📋 تم تحميل القالب', 'ok');
 }
-
 function detectSeparator(firstLine){
   const counts = {
     ',':(firstLine.match(/,/g)||[]).length,
@@ -2302,7 +2349,6 @@ function parseCSV(text, sep){
   if(cell !== '' || row.length){ row.push(cell); rows.push(row); }
   return rows.filter(r => r.some(x => String(x).trim() !== ''));
 }
-
 function buildHeaderMap(headers){
   const map = {};
   const aliases = {
@@ -2332,8 +2378,6 @@ function buildHeaderMap(headers){
   });
   return map;
 }
-
-/* ✅ التعديل الرئيسي: مطابقة بالباركود فقط — رقم الصنف قابل للتكرار */
 async function importCSV(file){
   try{
     const buf = await file.arrayBuffer();
@@ -2345,7 +2389,6 @@ async function importCSV(file){
     const sep = detectSeparator(firstLine);
     const rows = parseCSV(text, sep);
     if(!rows.length){ alert('⚠️ الملف فارغ أو الترميز غير مدعوم.'); return; }
-
     const firstNorm = norm(rows[0].join(' '));
     const hasHeader = firstNorm.includes('باركود') || firstNorm.includes('اسم')
                    || firstNorm.includes('صنف') || firstNorm.includes('سعر')
@@ -2355,7 +2398,6 @@ async function importCSV(file){
     else { headerMap = { barcode:0,no:1,name:2,model:3,cost:4,retail:5,whole:6,unit:7 }; dataRows = rows; }
     if(!dataRows.length){ alert('⚠️ لا توجد صفوف بيانات.'); return; }
     if(headerMap.name === undefined){ alert('تعذّر التعرف على الأعمدة.'); return; }
-
     const getVal = (row, key) => {
       const idx = headerMap[key];
       return idx === undefined ? '' : String(row[idx] ?? '').trim();
@@ -2364,16 +2406,10 @@ async function importCSV(file){
       const raw = toWesternDigits(getVal(row, key).replace(/[٬،\s]/g,'').replace(',', '.'));
       const n = parseFloat(raw); return isNaN(n) ? 0 : n;
     };
-
-    // ✅ خريطة الباركود الفريد فقط
     const byBarcode = new Map();
-    DB.forEach(it => {
-      if(it.barcode) byBarcode.set(it.barcode, it);
-    });
-
+    DB.forEach(it => { if(it.barcode) byBarcode.set(it.barcode, it); });
     const toAdd = [], toUpdate = [];
     let skipped = 0;
-
     for(let i = 0; i < dataRows.length; i++){
       const r = dataRows[i];
       const barcodeFixed = fixScientificNotation(getVal(r,'barcode'));
@@ -2394,28 +2430,20 @@ async function importCSV(file){
         branch:  getVal(r,'branch') || 'الإدارة'
       };
       if(!item.name){ skipped++; continue; }
-
-      // ✅ المطابقة بالباركود فقط
       if(item.barcode && byBarcode.has(item.barcode)){
-        // باركود موجود → تحديث
         const existing = byBarcode.get(item.barcode);
         const merged = { ...existing, ...item, id: existing.id };
         toUpdate.push(merged);
         byBarcode.set(item.barcode, merged);
       } else {
-        // باركود جديد أو بدون باركود → إضافة سجل جديد (حتى لو نفس رقم الصنف)
         const newItem = {
           id: Date.now() + Math.random().toString(36).slice(2,7) + '_' + i,
-          ...item,
-          created: new Date().toISOString()
+          ...item, created: new Date().toISOString()
         };
         toAdd.push(newItem);
         if(newItem.barcode) byBarcode.set(newItem.barcode, newItem);
       }
     }
-
-    console.log(`📊 إجمالي: ${dataRows.length} | جديد: ${toAdd.length} | تحديث: ${toUpdate.length} | متجاهل: ${skipped}`);
-
     showProgress(5);
     await dbBulkPut([...toAdd, ...toUpdate], (done, total) => showProgress(5 + Math.round(done/total*90)));
     showProgress(100);
@@ -2469,15 +2497,12 @@ applyTheme(localStorage.getItem(THEME_KEY) || 'light');
    🎤 البحث الصوتي
    ================================================================ */
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-
 let recognition = null;
 let voiceListening = false;
 let voiceContinuousMode = false;
 let voiceRestartTimer = null;
 let voiceLangValue = localStorage.getItem(VOICE_KEY) || 'ar-SA';
-
 function isVoiceSupported(){ return !!SpeechRec; }
-
 function initVoiceRecognition(){
   if(!isVoiceSupported()) return null;
   const r = new SpeechRec();
@@ -2485,14 +2510,12 @@ function initVoiceRecognition(){
   r.continuous = false;
   r.interimResults = true;
   r.maxAlternatives = 3;
-
   r.onstart = () => {
     voiceListening = true;
     $('#micBtn').classList.add('listening');
     $('#voiceBar').classList.add('on');
     setVoiceText('تكلّم الآن...', true);
   };
-
   r.onresult = (e) => {
     let interim = '', finalText = '';
     for(let i = e.resultIndex; i < e.results.length; i++){
@@ -2506,10 +2529,8 @@ function initVoiceRecognition(){
       applyVoiceResult(finalText.trim());
     }
   };
-
   r.onerror = (ev) => {
     const err = ev.error || 'unknown';
-    console.warn('Speech error:', err);
     let msg = '⚠️ تعذّر التعرف على الصوت';
     if(err === 'not-allowed' || err === 'service-not-allowed') msg = '🚫 لم يتم السماح بالميكروفون';
     else if(err === 'no-speech')     msg = '🎤 لم يتم سماع أي صوت';
@@ -2519,30 +2540,22 @@ function initVoiceRecognition(){
     if(err !== 'aborted') toast(msg, 'warn');
     stopVoice();
   };
-
   r.onend = () => {
     voiceListening = false;
     $('#micBtn').classList.remove('listening');
     if(voiceContinuousMode && $('#voiceBar').classList.contains('on')){
-      voiceRestartTimer = setTimeout(() => {
-        try{ r.start(); }catch(e){}
-      }, 400);
+      voiceRestartTimer = setTimeout(() => { try{ r.start(); }catch(e){} }, 400);
     }else{
-      setTimeout(() => {
-        if(!voiceListening) $('#voiceBar').classList.remove('on');
-      }, 600);
+      setTimeout(() => { if(!voiceListening) $('#voiceBar').classList.remove('on'); }, 600);
     }
   };
-
   return r;
 }
-
 function setVoiceText(text, isEmpty){
   const el = $('#voiceText');
   el.textContent = text || 'تكلّم الآن...';
   el.classList.toggle('empty', !!isEmpty);
 }
-
 function startVoice(){
   if(!isVoiceSupported()){
     alert('❌ البحث الصوتي غير مدعوم في هذا المتصفح.');
@@ -2553,10 +2566,8 @@ function startVoice(){
     return;
   }
   if(voiceListening) return;
-
   recognition = initVoiceRecognition();
   if(!recognition) return;
-
   try{ recognition.start(); }
   catch(err){
     setTimeout(() => {
@@ -2564,7 +2575,6 @@ function startVoice(){
     }, 300);
   }
 }
-
 function stopVoice(){
   voiceContinuousMode = false;
   const chk = $('#voiceContinuous');
@@ -2575,21 +2585,79 @@ function stopVoice(){
   $('#micBtn').classList.remove('listening');
   setTimeout(() => $('#voiceBar').classList.remove('on'), 300);
 }
-
 function applyVoiceResult(text){
   if(!text) return;
-  let cleaned = text
-    .replace(/^(ابحث عن|ابحث|عن|أبحث عن|أرني|اظهر|أظهر|فتح|افتح|ورني|ورّني|بكم|كم سعر|سعر|عندك|عندكم)\s+/i, '')
-    .replace(/\s+(من فضلك|لو سمحت|رجاءً|رجاء|بليز)$/i, '')
-    .trim();
-  if(!cleaned) cleaned = text;
-  cleaned = toWesternDigits(cleaned);
+  let cleaned = toWesternDigits(text.trim());
 
-  $('#q').value = cleaned;
+  const colMap = [
+    { keys: ['سعر الجملة','سعر الجمله','بالجملة','بالجمله','سعر جملة','جملة'], col: 'whole', label: 'سعر الجملة' },
+    { keys: ['سعر البيع','سعر بيع','بسعر البيع','بالبيع','بيع'], col: 'retail', label: 'سعر البيع' },
+    { keys: ['سعر التكلفة','سعر التكلفه','بالتكلفة','بالتكلفه','سعر تكلفة','تكلفة','تكلفه'], col: 'cost', label: 'سعر التكلفة' },
+    { keys: ['بالريال اليمني','الريال اليمني','ريال يمني','السعر اليمني','اليمني'], col: 'retailYer', label: 'السعر بالريال اليمني' },
+    { keys: ['رقم الصنف','رقم صنف','كود الصنف','كود صنف','رقم المنتج','رقم المادة','الصنف'], col: 'no', label: 'رقم الصنف' },
+    { keys: ['الباركود','باركود','بار كود','البار كود'], col: 'barcode', label: 'الباركود' },
+    { keys: ['رقم الموديل','الموديل','موديل'], col: 'model', label: 'الموديل' },
+    { keys: ['الوحدة','الوحده','وحدة'], col: 'unit', label: 'الوحدة' },
+    { keys: ['الفرع','فرع'], col: 'branch', label: 'الفرع' }
+  ];
+  const sortedKeys = [];
+  colMap.forEach(c => c.keys.forEach(k => sortedKeys.push({ key: k, col: c.col, label: c.label })));
+  sortedKeys.sort((a, b) => b.key.length - a.key.length);
+  const numericCols = new Set(['cost','retail','whole','retailYer']);
+
+  for(const item of sortedKeys){
+    const idx = cleaned.indexOf(item.key);
+    if(idx === -1) continue;
+    let after = cleaned.substring(idx + item.key.length).trim();
+    after = after.replace(/^(هو|هي|=|:|يساوي|تساوي|اللي|الذي|التي|عن|من)\s+/i, '').trim();
+    if(!after) continue;
+    let filterValue = '';
+    if(numericCols.has(item.col)){
+      let m;
+      if((m = after.match(/^(?:أكثر|اكثر|أكبر|اكبر|أعلى|اعلى|فوق|يزيد|تزيد)\s*(?:من|عن)?\s*(-?\d+(?:\.\d+)?)/))){
+        filterValue = '>' + m[1];
+      } else if((m = after.match(/^(?:أقل|اقل|أصغر|اصغر|أدنى|ادنى|تحت|يقل|تقل)\s*(?:من|عن)?\s*(-?\d+(?:\.\d+)?)/))){
+        filterValue = '<' + m[1];
+      } else if((m = after.match(/^بين\s*(-?\d+(?:\.\d+)?)\s*(?:و|إلى|الى|حتى|-)\s*(-?\d+(?:\.\d+)?)/))){
+        filterValue = m[1] + '-' + m[2];
+      } else if((m = after.match(/-?\d+(?:\.\d+)?/))){
+        filterValue = m[0];
+      }
+    } else {
+      const stopWords = new Set(['و','أو','او','ثم','اللي','الذي','التي','بس','فقط','كمان','أيضا','ايضا','يساوي']);
+      let words = after.split(/\s+/).filter(Boolean).filter(w => !stopWords.has(w));
+      filterValue = words.slice(0, 2).join(' ').trim();
+    }
+    if(!filterValue) continue;
+    const input = document.querySelector(`.col-filter[data-col="${item.col}"]`);
+    if(!input) continue;
+    input.value = filterValue;
+    input.classList.add('active');
+    $('#q').value = '';
+    $('#clr').classList.remove('on');
+    saveFilters();
+    render();
+    const cnt = lastRowsCache.length;
+    toast(`🎤 ${item.label}: ${filterValue} — ${cnt} نتيجة`, 'ok');
+    buzz(40);
+    if(cnt > 0){
+      setTimeout(() => {
+        const firstRow = document.querySelector('#tbody tr');
+        if(firstRow) firstRow.scrollIntoView({ behavior:'smooth', block:'center' });
+      }, 200);
+    }
+    return;
+  }
+
+  let searchText = cleaned
+    .replace(/^(ابحث عن|ابحث|عن|أبحث عن|أرني|اظهر|أظهر|فتح|افتح|ورني|ورّني|بكم|كم سعر|عندك|عندكم)\s+/i, '')
+    .replace(/\s+(من فضلك|لو سمحت|رجاءً|رجاء|بليز|شكرا|شكراً)$/i, '')
+    .trim();
+  if(!searchText) searchText = cleaned;
+  $('#q').value = searchText;
   $('#clr').classList.toggle('on', true);
   render(); saveFilters();
-
-  const rows = searchItems(cleaned);
+  const rows = lastRowsCache;
   if(rows.length === 1){
     toast('✅ ' + rows[0].name, 'ok');
     setTimeout(() => {
@@ -2601,19 +2669,15 @@ function applyVoiceResult(text){
       }
     }, 150);
   } else if(rows.length === 0){
-    toast('❌ لا نتائج: ' + cleaned, 'warn');
+    toast('❌ لا نتائج: ' + searchText, 'warn');
   } else {
     toast(`✅ ${rows.length} نتيجة`, 'ok');
   }
 }
-
 $('#micBtn').addEventListener('click', () => {
-  if(voiceListening) stopVoice();
-  else startVoice();
+  if(voiceListening) stopVoice(); else startVoice();
 });
-
 $('#voiceCloseBtn').addEventListener('click', stopVoice);
-
 $('#voiceLang').addEventListener('change', e => {
   voiceLangValue = e.target.value;
   try{ localStorage.setItem(VOICE_KEY, voiceLangValue); }catch(_){}
@@ -2623,25 +2687,17 @@ $('#voiceLang').addEventListener('change', e => {
     setTimeout(startVoice, 400);
   }
 });
-
 $('#voiceContinuous').addEventListener('change', e => {
   voiceContinuousMode = e.target.checked;
   if(voiceContinuousMode && !voiceListening) startVoice();
   toast(voiceContinuousMode ? '🔄 استماع متواصل' : '⏹️ استماع لمرة واحدة', 'ok');
 });
-
 (function initVoiceUI(){
   const sel = $('#voiceLang');
-  if(sel){
-    sel.value = voiceLangValue;
-    if(!sel.value) sel.value = 'ar-SA';
-  }
+  if(sel){ sel.value = voiceLangValue; if(!sel.value) sel.value = 'ar-SA'; }
   if(!isVoiceSupported()){
     const btn = $('#micBtn');
-    if(btn){
-      btn.style.opacity = '0.45';
-      btn.title = 'البحث الصوتي غير مدعوم في هذا المتصفح';
-    }
+    if(btn){ btn.style.opacity = '0.45'; btn.title = 'البحث الصوتي غير مدعوم في هذا المتصفح'; }
   }
 })();
 
@@ -2651,34 +2707,28 @@ $('#voiceContinuous').addEventListener('change', e => {
 function saveRate(){
   try{ localStorage.setItem(RATE_KEY, String(currentRate)); }catch(e){}
 }
-
 $('#exchangeRate').addEventListener('input', e => {
   const v = parseFloat(toWesternDigits(e.target.value));
   currentRate = isNaN(v) || v < 0 ? 0 : v;
-  saveRate();
-  render();
+  saveRate(); render();
 });
-
 $('#exchangeRate').addEventListener('keydown', e => {
   if(e.key === 'Escape'){
-    e.target.value = '';
-    currentRate = 0;
-    saveRate();
-    render();
+    e.target.value = ''; currentRate = 0; saveRate(); render();
   }
 });
 
 /* ================================================================
-   📊 نموذج الجرد
+   📊 شاشة الجرد المطوّرة
    ================================================================ */
-let stScanner = null;
+let stScanner = null;            // كاميرا الجرد
 let stRunning = false;
 let stItems   = [];
 let stRowSeq  = 0;
 let stLastCode = '', stLastTime = 0;
 const ST_COOLDOWN = 1200;
-const ST_KEY = 'items_stocktake_v3';
-const ST_EMPTY_ROWS = 8;
+const ST_KEY = 'items_stocktake_v4';   // تم ترقية الإصدار لدعم التحديثات
+const ST_EMPTY_ROWS = 6;
 
 let stSuggestFor = null;
 let stSuggestList = [];
@@ -2697,7 +2747,7 @@ function stSave(){
 async function openStocktake(){
   stItems = [];
   try{
-    const saved = localStorage.getItem(ST_KEY) || localStorage.getItem('items_stocktake_v2');
+    const saved = localStorage.getItem(ST_KEY) || localStorage.getItem('items_stocktake_v3') || localStorage.getItem('items_stocktake_v2');
     if(saved){
       const arr = JSON.parse(saved);
       if(Array.isArray(arr)){
@@ -2710,20 +2760,34 @@ async function openStocktake(){
       }
     }
   }catch(e){}
-  while(stItems.length < ST_EMPTY_ROWS) stItems.push(stNewItemRow());
+  if(stItems.length === 0){
+    for(let i = 0; i < ST_EMPTY_ROWS; i++) stItems.push(stNewItemRow());
+  }
   renderStList();
   refreshBranchFilter();
+  // إعادة تعيين شريط البحث
+  $('#stQuickSearch').value = '';
+  $('#stQuickResults').classList.remove('on');
+  $('#stQuickResults').innerHTML = '';
   $('#stocktakeOverlay').classList.add('on');
+  setTimeout(() => $('#stQuickSearch').focus(), 250);
 }
 
+async function closeStocktake(){
+  await stopStScanner();
+  $('#stocktakeOverlay').classList.remove('on');
+  hideStSuggest();
+  hideQuickResults();
+  stSave();
+}
+
+/* ---------------- الكاميرا داخل شاشة الجرد ---------------- */
 async function toggleStCamera(){
-  if(stRunning){
-    await stopStScanner();
-    return;
-  }
+  if(stRunning){ await stopStScanner(); return; }
   if(typeof Html5Qrcode === 'undefined'){ toast('⚠️ تعذّر تحميل مكتبة الماسح', 'warn'); return; }
   const reader = $('#stocktakeReader');
   reader.hidden = false;
+  $('#stQuickScanBtn').classList.add('scanning');
   await new Promise(r => setTimeout(r, 150));
   stScanner = new Html5Qrcode('stocktakeReader', { verbose: false });
   try{
@@ -2741,7 +2805,7 @@ async function toggleStCamera(){
       () => {}
     );
     stRunning = true;
-    $('#stCamBtn').textContent = '⏹️ إيقاف الكاميرا';
+    toast('📷 وجّه الكاميرا نحو الباركود', 'ok');
   }catch(err){
     console.error('Stocktake scanner error:', err);
     const msg = (err && err.message) ? err.message : String(err);
@@ -2752,9 +2816,9 @@ async function toggleStCamera(){
     try{ stScanner.clear(); }catch(e){}
     stScanner = null;
     reader.hidden = true;
+    $('#stQuickScanBtn').classList.remove('scanning');
   }
 }
-
 async function stopStScanner(){
   if(stScanner){
     try{ if(stRunning) await stScanner.stop(); }catch(e){}
@@ -2763,32 +2827,56 @@ async function stopStScanner(){
   stScanner = null;
   stRunning = false;
   $('#stocktakeReader').hidden = true;
-  $('#stCamBtn').textContent = '📷 كاميرا';
+  $('#stQuickScanBtn').classList.remove('scanning');
 }
 
-async function closeStocktake(){
-  await stopStScanner();
-  $('#stocktakeOverlay').classList.remove('on');
-  hideStSuggest();
-  stSave();
-}
-
+/* ---------------- استقبال المسح من الكاميرا ---------------- */
 function onStocktakeScan(text){
   const code = String(text).trim();
   const now = Date.now();
   if(code === stLastCode && (now - stLastTime) < ST_COOLDOWN) return;
   stLastCode = code; stLastTime = now;
 
+  buzz(80); beep();
+
+  // وضع الكود في حقل البحث السريع
+  $('#stQuickSearch').value = code;
+  $('#stQuickSearch').focus();
+
+  // محاولة الإضافة التلقائية إذا وجد صنف مطابق
   const item = (findByCode(code) || [])[0] || null;
-  if(!item){
-    buzzWarn(); beepWarn();
+  if(item){
+    addToStocktakeList(item);
+    // تنظيف الحقل بعد الإضافة الناجحة
+    setTimeout(() => {
+      $('#stQuickSearch').value = '';
+      hideQuickResults();
+    }, 400);
+  } else {
     toast('❌ غير موجود في قاعدة البيانات: ' + code, 'warn');
+    buzzWarn(); beepWarn();
+    // إظهار نتائج البحث عن الكود
+    showQuickResults(code);
+  }
+}
+
+/* ---------------- إضافة صنف إلى قائمة الجرد ---------------- */
+function addToStocktakeList(item){
+  if(!item) return;
+  // التحقق إن كان موجوداً مسبقاً
+  const existingRow = stItems.find(r => r.itemId === item.id);
+  if(existingRow){
+    // التركيز على الصف الموجود
+    focusStQty(existingRow.key);
+    toast('⚠️ الصنف موجود مسبقاً في القائمة', 'warn');
     return;
   }
-
-  buzz(80); beep(1200);
+  // البحث عن صف فارغ
   let row = stItems.find(r => !r.itemId);
-  if(!row){ row = stNewItemRow(); stItems.push(row); }
+  if(!row){
+    row = stNewItemRow();
+    stItems.push(row);
+  }
   row.itemId = item.id;
   if(!stItems.some(r => !r.itemId)) stItems.push(stNewItemRow());
   stSave(); renderStList();
@@ -2808,21 +2896,121 @@ function focusStQty(key){
   }, 90);
 }
 
+/* ---------------- البحث السريع داخل شاشة الجرد ---------------- */
 function stFindCandidates(q){
   const nq = norm(toWesternDigits(q));
   if(!nq) return [];
   const out = [];
   for(const it of DB){
-    const sNo = String(it.no || ''), sName = String(it.name || ''), sBc = String(it.barcode || '');
-    if((sNo && sNo.includes(q)) || (sName && sName.includes(q)) || (sBc && sBc.includes(q))
-       || norm(sNo + ' ' + sName + ' ' + sBc).includes(nq)){
+    const sNo = String(it.no || ''), sName = String(it.name || ''),
+          sBc = String(it.barcode || ''), sMd = String(it.model || '');
+    // مطابقة دقيقة أولاً
+    if(norm(sBc) === nq || norm(sNo) === nq){
+      out.unshift(it);
+      continue;
+    }
+    if((sNo && sNo.includes(q)) || (sName && sName.includes(q)) ||
+       (sBc && sBc.includes(q)) || (sMd && sMd.includes(q)) ||
+       norm(sNo + ' ' + sName + ' ' + sBc + ' ' + sMd).includes(nq)){
       out.push(it);
-      if(out.length >= 8) break;
+      if(out.length >= 15) break;
     }
   }
-  return out;
+  return out.slice(0, 12);
 }
 
+function showQuickResults(query){
+  const results = stFindCandidates(query);
+  const box = $('#stQuickResults');
+  if(!results.length){
+    if(!query){ box.classList.remove('on'); return; }
+    box.innerHTML = `<div class="st-qr-empty">
+      <div class="st-qr-emoji">🔍</div>
+      <div>لا نتائج لـ: <b>${esc(query)}</b></div>
+    </div>`;
+    box.classList.add('on');
+    return;
+  }
+  box.innerHTML = results.map((it, i) => {
+    const inList = stItems.some(r => r.itemId === it.id);
+    const initial = (it.name || '؟').trim().charAt(0);
+    const yer = (Number(it.retail) || 0) * currentRate;
+    const priceTxt = currentRate > 0 ? money(yer) + ' ر.ي' : money(it.retail || 0);
+    return `
+      <div class="st-qr-item ${inList ? 'already' : ''}" data-id="${it.id}">
+        <div class="st-qr-avatar">${esc(initial)}</div>
+        <div class="st-qr-main">
+          <div class="st-qr-name">${esc(it.name)} ${inList ? '✓' : ''}</div>
+          <div class="st-qr-meta">${esc(it.no || '—')}${it.barcode ? ' • ' + esc(it.barcode) : ''}</div>
+        </div>
+        <div class="st-qr-price">${priceTxt}</div>
+      </div>`;
+  }).join('');
+  box.classList.add('on');
+}
+
+function hideQuickResults(){
+  $('#stQuickResults').classList.remove('on');
+  $('#stQuickResults').innerHTML = '';
+}
+
+/* ---------------- ربط أحداث شريط البحث السريع ---------------- */
+let stQuickDeb = null;
+$('#stQuickSearch').addEventListener('input', e => {
+  const v = e.target.value.trim();
+  clearTimeout(stQuickDeb);
+  if(!v){ hideQuickResults(); return; }
+  stQuickDeb = setTimeout(() => showQuickResults(v), 180);
+});
+$('#stQuickSearch').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    const v = e.target.value.trim();
+    if(!v) return;
+    // محاولة إضافة أول نتيجة
+    const results = stFindCandidates(v);
+    if(results.length){
+      addToStocktakeList(results[0]);
+      $('#stQuickSearch').value = '';
+      hideQuickResults();
+    } else {
+      toast('❌ لا نتائج لـ: ' + v, 'warn');
+    }
+  }
+  if(e.key === 'Escape'){
+    $('#stQuickSearch').value = '';
+    hideQuickResults();
+  }
+});
+$('#stQuickResults').addEventListener('click', e => {
+  const item = e.target.closest('.st-qr-item');
+  if(!item) return;
+  const id = item.dataset.id;
+  const it = DB.find(x => x.id === id);
+  if(!it) return;
+  addToStocktakeList(it);
+  $('#stQuickSearch').value = '';
+  hideQuickResults();
+});
+$('#stQuickScanBtn').addEventListener('click', toggleStCamera);
+$('#stQuickAddBtn').addEventListener('click', () => {
+  const v = $('#stQuickSearch').value.trim();
+  if(!v){
+    toast('اكتب أو امسح شيئاً أولاً', 'warn');
+    $('#stQuickSearch').focus();
+    return;
+  }
+  const results = stFindCandidates(v);
+  if(results.length){
+    addToStocktakeList(results[0]);
+    $('#stQuickSearch').value = '';
+    hideQuickResults();
+  } else {
+    toast('❌ لا نتائج لـ: ' + v, 'warn');
+  }
+});
+
+/* ---------------- الحقل داخل كل صف (يستخدم نفس منطق البحث) ---------------- */
 function showStSuggest(inputEl, key){
   const q = toWesternDigits(inputEl.value.trim());
   stSuggestFor = key;
@@ -2842,13 +3030,11 @@ function showStSuggest(inputEl, key){
   box.style.top = (r.bottom + 4) + 'px';
   box.style.left = Math.max(8, Math.min(r.left, window.innerWidth - box.offsetWidth - 8)) + 'px';
 }
-
 function hideStSuggest(){
   stSuggestFor = null;
   stSuggestList = [];
   $('#stSuggest').hidden = true;
 }
-
 function pickStCandidate(i){
   const it = stSuggestList[i];
   const key = stSuggestFor;
@@ -2863,6 +3049,7 @@ function pickStCandidate(i){
   focusStQty(row.key);
 }
 
+/* ---------------- عرض قائمة الجرد ---------------- */
 function renderStList(){
   const branchFilter = $('#stBranchFilter')?.value || '';
   const filteredRows = branchFilter
@@ -2915,7 +3102,7 @@ function renderStList(){
       <tr data-key="${r.key}" class="${it ? 'filled' : ''}">
         <td class="st-cell mut num" style="text-align:center">${idx + 1}</td>
         <td><input class="st-pick-input" data-key="${r.key}" type="text"
-                   placeholder="رقم الصنف / الاسم / باركود"
+                   placeholder="الاسم / رقم الصنف / باركود"
                    autocomplete="off"></td>
         ${mid}
         <td><input type="number" class="st-qty-input" data-key="${r.key}"
@@ -2938,7 +3125,6 @@ function refreshBranchFilter(){
     if(it) branches.add(it.branch || 'الإدارة');
   });
   DB.forEach(it => { if(it.branch) branches.add(it.branch); });
-
   const current = sel.value;
   sel.innerHTML = '<option value="">كل الفروع</option>' +
     [...branches].sort().map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('');
@@ -3036,16 +3222,13 @@ $('#stSuggest').addEventListener('mousedown', e => {
    ================================================================ */
 const XLSX_COLS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 const XLSX_WIDTHS = [16, 10, 32, 12, 10, 10, 10, 12, 10, 8, 10, 14];
-
 function xlsxEscape(s){
   return String(s ?? '').replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'})[c]);
 }
 function xlsxCell(ref, val, kind, style){
   const sAttr = style ? ` s="${style}"` : '';
-  if(kind === 'num'){
-    return `<c r="${ref}"${sAttr}><v>${Number(val) || 0}</v></c>`;
-  }
+  if(kind === 'num'){ return `<c r="${ref}"${sAttr}><v>${Number(val) || 0}</v></c>`; }
   const str = String(val ?? '');
   if(str === '') return '';
   return `<c r="${ref}" t="inlineStr"${sAttr}><is><t>${xlsxEscape(str)}</t></is></c>`;
@@ -3114,11 +3297,9 @@ function buildStocktakeXLSX(){
   const filled = stItems.filter(r => r.itemId);
   const xmlHead = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
   const round2 = v => Math.round((Number(v) || 0) * 100) / 100;
-
   const rowsXml = [];
   rowsXml.push('<row r="1">' + ['رقم الباركود','رقم الصنف','اسم الصنف','رقم الموديل','الفرع','سعر التكلفة','سعر البيع','سعر البيع (ر.ي)','سعر الجملة','الوحدة','الكمية المجرودة','إجمالي التكلفة']
     .map((h, i) => xlsxCell(XLSX_COLS[i] + '1', h, 'str', 1)).join('') + '</row>');
-
   let sumQty = 0, sumTotal = 0, r = 2;
   for(const row of filled){
     const it = stItemOf(row);
@@ -3152,7 +3333,6 @@ function buildStocktakeXLSX(){
     r++;
   }
   const lastRow = Math.max(1, r - 1);
-
   const enc = new TextEncoder();
   const files = [
     { name: '[Content_Types].xml', data: enc.encode(xmlHead +
@@ -3208,11 +3388,9 @@ function exportStocktakeXLSX(){
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   toast('📊 تم تصدير الجرد Excel', 'ok');
 }
-
 function exportStocktake(){
   const filled = stItems.filter(r => r.itemId);
   if(!filled.length){ toast('⚠️ لا يوجد أصناف في الجرد', 'warn'); return; }
-
   const rows = [['رقم الباركود','رقم الصنف','اسم الصنف','رقم الموديل','الفرع','سعر التكلفة','سعر البيع','سعر البيع (ر.ي)','سعر الجملة','الوحدة','الكمية المجرودة','إجمالي التكلفة']];
   filled.forEach(r => {
     const it = stItemOf(r);
@@ -3227,12 +3405,10 @@ function exportStocktake(){
       ((Number(it.cost) || 0) * qty)
     ]);
   });
-
   const csv = '\uFEFF' + rows.map(row => row.map(v => {
     const s = String(v ?? '');
     return /[",\n;]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
   }).join(',')).join('\r\n');
-
   const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -3242,13 +3418,15 @@ function exportStocktake(){
   toast('⬇️ تم تصدير الجرد', 'ok');
 }
 
+/* ================================================================
+   ربط أحداث الجرد
+   ================================================================ */
 $('#stocktakeBtn').addEventListener('click', openStocktake);
 $('#stocktakeCloseBtn').addEventListener('click', closeStocktake);
 $('#stocktakeCloseBtn2').addEventListener('click', closeStocktake);
 $('#stocktakeOverlay').addEventListener('click', e => {
   if(e.target.id === 'stocktakeOverlay') closeStocktake();
 });
-$('#stCamBtn').addEventListener('click', toggleStCamera);
 $('#stAddBtn').addEventListener('click', () => {
   const row = stNewItemRow();
   stItems.push(row);
@@ -3265,7 +3443,7 @@ $('#stClearBtn').addEventListener('click', () => {
   if(!stItems.some(r => r.itemId)) return;
   if(confirm('مسح كل سجلات الجرد؟')){
     stItems = [];
-    while(stItems.length < ST_EMPTY_ROWS) stItems.push(stNewItemRow());
+    for(let i = 0; i < ST_EMPTY_ROWS; i++) stItems.push(stNewItemRow());
     stSave(); renderStList();
     toast('🗑️ تم مسح الجرد', 'ok');
   }
@@ -3277,7 +3455,6 @@ $('#stBranchFilter')?.addEventListener('change', renderStList);
 /* ================================================================
    الأحداث العامة
    ================================================================ */
-
 $('#q').addEventListener('input', () => {
   const before = $('#q').value;
   const after = toWesternDigits(before);
@@ -3293,7 +3470,6 @@ $('#clr').addEventListener('click', () => {
   $('#q').value = ''; $('#clr').classList.remove('on');
   render(); saveFilters(); $('#q').focus();
 });
-
 document.querySelectorAll('.col-filter').forEach(inp => {
   inp.addEventListener('input', () => { render(); saveFilters(); });
   inp.addEventListener('keydown', e => {
@@ -3311,7 +3487,6 @@ $('#clearFiltersBtn').addEventListener('click', () => {
   clearAllFilters();
   toast('🧹 تم مسح كل الفلاتر', 'ok');
 });
-
 $('#scanBtn').addEventListener('click', openScanner);
 $('#scanCloseBtn').addEventListener('click', closeScanner);
 $('#scanCloseBtn2').addEventListener('click', closeScanner);
@@ -3345,28 +3520,23 @@ $('#scanResultsList').addEventListener('click', e => {
     openForm(r.item);
   }
 });
-
 $('#infoCloseBtn').addEventListener('click', closeInfoCard);
 $('#infoOverlay').addEventListener('click', e => {
   if(e.target.id === 'infoOverlay') closeInfoCard();
 });
-
 $('#addBtn').addEventListener('click', () => openForm(null));
 $('#closeBtn').addEventListener('click', closeForm);
 $('#cancelBtn').addEventListener('click', closeForm);
 $('#saveBtn').addEventListener('click', submitForm);
 $('#form').addEventListener('submit', e => { e.preventDefault(); submitForm(); });
 $('#overlay').addEventListener('click', e => { if(e.target.id === 'overlay') closeForm(); });
-
 $('#qrCloseBtn').addEventListener('click', closeQR);
 $('#qrCloseBtn2').addEventListener('click', closeQR);
 $('#qrPrintBtn').addEventListener('click', printQR);
 $('#qrOverlay').addEventListener('click', e => { if(e.target.id === 'qrOverlay') closeQR(); });
-
 $('#nameCardOverlay').addEventListener('click', e => {
   if(e.target.id === 'nameCardOverlay') closeNameCard();
 });
-
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape'){
     if(voiceListening) stopVoice();
@@ -3397,11 +3567,9 @@ document.addEventListener('keydown', e => {
     if(!voiceListening) startVoice();
   }
 });
-
 let lastTapTime = 0;
 let lastTapId   = null;
 const DOUBLE_TAP_DELAY = 400;
-
 $('#tbody').addEventListener('click', e => {
   const btn = e.target.closest('button[data-act]');
   if(btn){
