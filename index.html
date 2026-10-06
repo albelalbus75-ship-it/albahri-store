@@ -1162,6 +1162,7 @@ body.dark .st-remove-btn:active{ background:rgba(248,113,113,.12); }
   <button class="btn" id="expBtn">⬇️ تصدير</button>
   <button class="btn admin-only" id="impBtn">⬆️ استيراد</button>
   <button class="btn sync" id="syncBtn" title="مزامنة سحابية">☁️ مزامنة</button>
+  <button class="btn" id="forceSyncBtn" title="مزامنة قوية — تحميل كامل">🔄 قوية</button>
   <button class="btn dgr admin-only" id="delAllBtn">🗑️</button>
   <input type="file" id="file" accept=".csv,text/csv" hidden>
 </div>
@@ -1502,11 +1503,11 @@ body.dark .st-remove-btn:active{ background:rgba(248,113,113,.12); }
 
 <script>
 /* ================================================================
-   قاعدة بيانات الأصناف — نظام المستخدمين + المزامنة السحابية
+   قاعدة بيانات الأصناف — نظام كامل + مزامنة سحابية + Polling
    ================================================================ */
 
 // ═══════════════════════════════════════════════════════════════
-// 🔑 إعدادات Supabase
+// 🔑 مفاتيح Supabase (المشروع الجديد)
 // ═══════════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://fypkpoqwbvayzhjetdkw.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZweXBrb3F3YnlheXpoamV0ZGt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMTA3NjAsImV4cCI6MjEwNjg4Njc2MH0.K6_TlhHIntoEqijpdxDALWc2OTDkyjLCr9H9PUQonaU';
@@ -1544,6 +1545,7 @@ let supabaseClient = null;
 let isSyncing = false;
 let realtimeChannel = null;
 let lastSyncAt = 0;
+let pollingTimer = null;
 
 /* ================================================================
    أدوات عامة
@@ -2096,25 +2098,21 @@ async function fullSync(){
   updateCloudStatus('جاري المزامنة...', 'warn');
 
   try{
-    // 1) تحميل من السحابة
     const cloudItems = await pullItemsFromCloud();
     if(cloudItems.length > 0){
       await dbClear();
       await dbBulkPut(cloudItems);
       console.log('✅ تم تحميل ' + cloudItems.length + ' صنف من السحابة');
     } else if(DB.length > 0){
-      // السحابة فارغة والمحلي فيه بيانات → ارفع
       await pushBulkToCloud(DB);
     }
 
     await refreshCache();
 
-    // 2) المستخدمون
     const cloudUsers = await pullUsersFromCloud();
     if(cloudUsers.length > 0) saveUsersList(cloudUsers);
     else await pushUsersToCloud();
 
-    // 3) سعر الصرف
     const cloudRate = await pullRateFromCloud();
     if(cloudRate !== null && cloudRate > 0){
       currentRate = cloudRate;
@@ -2127,6 +2125,7 @@ async function fullSync(){
     }
 
     lastSyncAt = Date.now();
+    localStorage.setItem('last_sync_time', String(Date.now()));
     updateCloudStatus('مُتزامن', 'ok');
     toast('☁️ تمت المزامنة (' + DB.length + ' صنف)', 'ok');
   }catch(e){
@@ -2159,6 +2158,62 @@ function subscribeRealtime(){
       });
   }catch(e){ console.warn('subscribeRealtime:', e); }
 }
+
+/* ================================================================
+   🔄 Polling تلقائي — يحل مشكلة عدم تحديث الجوال
+   ================================================================ */
+async function checkForUpdates(silent){
+  if(!supabaseClient || isSyncing) return;
+  try{
+    const { data, error } = await supabaseClient
+      .from('items')
+      .select('updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if(error || !data) return;
+
+    const cloudTime = new Date(data.updated_at).getTime();
+    const localTime = Number(localStorage.getItem('last_sync_time') || '0');
+
+    if(cloudTime > localTime + 1000){
+      console.log('🔄 تحديثات جديدة من السحابة');
+      const cloudItems = await pullItemsFromCloud();
+      if(cloudItems.length >= 0){
+        await dbClear();
+        await dbBulkPut(cloudItems);
+        await refreshCache();
+        localStorage.setItem('last_sync_time', String(cloudTime));
+        if(!silent) toast('🔄 تمت مزامنة تحديثات جديدة', 'ok');
+      }
+    }
+  }catch(e){
+    console.warn('checkForUpdates:', e);
+  }
+}
+
+function startPolling(){
+  if(pollingTimer) clearInterval(pollingTimer);
+  pollingTimer = setInterval(() => checkForUpdates(true), 20000);
+  console.log('✅ Polling بدأ — كل 20 ثانية');
+}
+
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible'){
+    console.log('👁️ التطبيق عاد للواجهة');
+    setTimeout(() => checkForUpdates(false), 500);
+  }
+});
+
+window.addEventListener('online', () => {
+  console.log('🌐 عاد الاتصال');
+  setTimeout(() => checkForUpdates(false), 1000);
+});
+
+window.addEventListener('focus', () => {
+  setTimeout(() => checkForUpdates(true), 500);
+});
 
 // اعتراض دوال قاعدة البيانات للمزامنة التلقائية
 (function wrapDBForSync(){
@@ -2324,7 +2379,6 @@ function exportScanResults(){
   toast('⬇️ تم تصدير النتائج');
 }
 
-/* مشاركة ونسخ */
 function buildItemShareText(item){
   const retail = Number(item.retail) || 0;
   const yer    = retail * currentRate;
@@ -2375,7 +2429,6 @@ function shareItemWhatsApp(item){
   }
 }
 
-/* بطاقة المعلومات */
 function openInfoCard(item, scanCode){
   currentInfoItem = item;
   currentInfoScanCode = scanCode || null;
@@ -2460,7 +2513,6 @@ function closeInfoCard(){
   maybeResumeScanner();
 }
 
-/* بطاقة الصنف الفخمة */
 function openNameCard(item){
   if(!item) return;
   const card = $('#nameCard');
@@ -2496,7 +2548,6 @@ function closeNameCard(){
   maybeResumeScanner();
 }
 
-/* QR */
 function openQR(item){
   currentQRItem = item;
   const content = item.barcode || item.no || item.name || 'NO-DATA';
@@ -2557,7 +2608,6 @@ function printQR(){
   w.document.close();
 }
 
-/* النموذج */
 function openForm(item, opts = {}){
   if(!item && !can('add')){ toast('🚫 لا تملك صلاحية الإضافة', 'warn'); return; }
   if(item && !can('edit')){ toast('🚫 لا تملك صلاحية التعديل', 'warn'); return; }
@@ -2628,7 +2678,6 @@ async function delItem(id){
   }catch(err){ alert('❌ فشل الحذف: ' + err.message); }
 }
 
-/* CSV — ✅ الفاصلة المنقوطة ; */
 const HEADERS = [
   'رقم الباركود','رقم الصنف','اسم الصنف','رقم الموديل',
   'سعر التكلفة','سعر البيع','سعر الجملة','الوحدة',
@@ -2675,7 +2724,6 @@ function detectSeparator(firstLine){
     ',': (firstLine.match(/,/g) || []).length,
     '\t': (firstLine.match(/\t/g) || []).length
   };
-  // ✅ تفضيل الفاصلة المنقوطة ;
   if(counts[';'] > 0 && counts[';'] >= counts[',']) return ';';
   if(counts['\t'] > counts[','] && counts['\t'] > counts[';']) return '\t';
   if(counts[','] > 0) return ',';
@@ -2796,7 +2844,6 @@ async function importCSV(file){
 }
 async function refreshCache(){ DB = await dbAll(); buildSearchIndex(); render(); }
 
-/* الوضع الليلي */
 const THEME_KEY = 'items_theme';
 function applyTheme(t){
   document.body.classList.toggle('dark', t === 'dark');
@@ -2810,7 +2857,6 @@ $('#themeBtn').addEventListener('click', () => {
 });
 applyTheme(localStorage.getItem(THEME_KEY) || 'light');
 
-/* 🎤 البحث الصوتي */
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 let voiceListening = false;
@@ -2892,7 +2938,6 @@ function stopVoice(){
   setTimeout(() => $('#voiceBar').classList.remove('on'), 300);
 }
 
-/* ✅ تصحيح الأرقام المعكوسة */
 function pickBestNumericValue(numStr, col){
   const reversed = numStr.split('').reverse().join('');
   if(reversed === numStr) return numStr;
@@ -3055,7 +3100,6 @@ $('#voiceContinuous').addEventListener('change', e => {
   }
 })();
 
-/* 💱 سعر الصرف */
 function saveRate(){
   try{ localStorage.setItem(RATE_KEY, String(currentRate)); }catch(e){}
   if(supabaseClient && !isSyncing) pushRateToCloud();
@@ -3074,7 +3118,6 @@ $('#exchangeRate').addEventListener('keydown', e => {
   if(e.key === 'Escape'){ e.target.value = ''; currentRate = 0; saveRate(); render(); }
 });
 
-/* 📊 الجرد */
 let stScanner = null;
 let stRunning = false;
 let stItems   = [];
@@ -3362,7 +3405,6 @@ $('#stSuggest').addEventListener('mousedown', e => {
   if(sg){ e.preventDefault(); pickStCandidate(Number(sg.dataset.i)); }
 });
 
-/* تصدير Excel XLSX */
 const XLSX_COLS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 const XLSX_WIDTHS = [16, 10, 32, 12, 10, 10, 10, 12, 10, 8, 10, 14];
 function xlsxEscape(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'})[c]); }
@@ -3524,7 +3566,6 @@ function exportStocktake(){
   toast('⬇️ تم تصدير الجرد (؛)', 'ok');
 }
 
-/* 👥 نظام المستخدمين */
 const USERS_KEY   = 'items_users_v1';
 const SESSION_KEY = 'items_session_v1';
 const PERMISSIONS = {
@@ -3807,7 +3848,6 @@ $('#usersCloseBtn').addEventListener('click', closeUsers);
 $('#usersCloseBtn2').addEventListener('click', closeUsers);
 $('#usersOverlay').addEventListener('click', e => { if(e.target.id === 'usersOverlay') closeUsers(); });
 
-/* الأحداث العامة */
 $('#expBtn').addEventListener('click', downloadCSV);
 $('#tplBtn').addEventListener('click', downloadTemplate);
 $('#impBtn').addEventListener('click', () => {
@@ -3819,13 +3859,30 @@ $('#file').addEventListener('change', e => {
   if(f) importCSV(f);
   e.target.value = '';
 });
+
 $('#syncBtn').addEventListener('click', async () => {
-  if(!supabaseClient){
-    toast('☁️ Supabase غير مُهيأ', 'warn');
-    return;
-  }
+  if(!supabaseClient){ toast('☁️ Supabase غير مُهيأ', 'warn'); return; }
   await fullSync();
 });
+
+$('#forceSyncBtn').addEventListener('click', async () => {
+  if(!supabaseClient){ toast('☁️ Supabase غير مُهيأ', 'warn'); return; }
+  if(!confirm('سيتم تحميل كل البيانات من السحابة. المتابعة؟')) return;
+  try{
+    updateCloudStatus('مزامنة قوية...', 'warn');
+    const cloudItems = await pullItemsFromCloud();
+    await dbClear();
+    await dbBulkPut(cloudItems);
+    await refreshCache();
+    localStorage.setItem('last_sync_time', String(Date.now()));
+    updateCloudStatus('مُتزامن', 'ok');
+    toast('✅ تم تحميل ' + cloudItems.length + ' صنف', 'ok');
+  }catch(e){
+    console.error(e);
+    toast('❌ فشل: ' + e.message, 'warn');
+  }
+});
+
 $('#delAllBtn').addEventListener('click', async () => {
   if(!can('deleteAll')){ toast('🚫 الحذف الكلي للمدير فقط', 'warn'); return; }
   if(!DB.length){ toast('⚠️ لا توجد بيانات', 'warn'); return; }
@@ -3835,7 +3892,6 @@ $('#delAllBtn').addEventListener('click', async () => {
     await dbClear();
     DB = []; buildSearchIndex(); render();
     toast('🗑️ تم حذف كل الأصناف', 'ok');
-    // حذف من السحابة
     if(supabaseClient){
       try{ await supabaseClient.from('items').delete().neq('id', '0'); }catch(e){}
     }
@@ -4006,7 +4062,6 @@ $('#stExportBtn').addEventListener('click', exportStocktake);
 $('#stExportXBtn').addEventListener('click', exportStocktakeXLSX);
 $('#stBranchFilter')?.addEventListener('change', renderStList);
 
-/* التهيئة */
 async function runInit(){
   try{
     await openDB();
@@ -4016,11 +4071,11 @@ async function runInit(){
     await refreshCache();
     if(migrated) toast('✅ تم ترحيل ' + migrated + ' صنفاً', 'ok');
 
-    // ☁️ تهيئة Supabase والمزامنة
     if(initSupabase()){
       setTimeout(async () => {
         await fullSync();
         subscribeRealtime();
+        startPolling();
       }, 1500);
     }
   }catch(err){
