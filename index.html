@@ -2077,7 +2077,6 @@ async function runInit(){
     alert('❌ تعذّر تشغيل قاعدة البيانات: ' + e.message);
   }
 }
-
 (function bootstrap(){
   currentUser = loadSession();
   if(!currentUser){ showLogin(); return; }
